@@ -18,7 +18,7 @@ const  certificate  = {
 const sslServer = https.createServer( certificate, app);
 
 
-sslServer.listen (3442, ()=>{
+sslServer.listen (3440, ()=>{
   console.log('Connected to secure server');
 });
 
@@ -27,6 +27,6 @@ sslServer.listen (3442, ()=>{
 //////////////////////////////////////////////////////////
 const server = http.createServer(app);
 
-server.listen(3000, ()=>{
+server.listen(3030, ()=>{
   console.log('Connected to simple server');
 });

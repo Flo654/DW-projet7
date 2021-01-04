@@ -1,21 +1,33 @@
 import jwt from "jsonwebtoken";
 import 'dotenv/config';
+import models from '../models';
 
-const auth = (req, res, next)=> {
+const auth = async (req, res, next)=> {
     try {
         const token = req.headers.authorization.split(' ')[1]; // catch token 
         const decodedToken = jwt.verify(token, process.env.AUTH_TOKEN); // verify token
-        const userId = decodedToken.userId;        
+        const user = await models.User.findOne({ where: { id: decodedToken.userId } });
+        const userId = decodedToken.userId; 
+        const isAdmin = decodedToken.isAdmin;
+        req.user = user
         
-        if ( req.body.userId && req.body.userId !== userId) {// compare tokens
-            throw 'Invalid user ID';
-        } else {
+        
+           
+        if ( !isAdmin && req.body.id !== userId ) {// compare tokens
+            res.status(500).json({
+                error : 'authorisation refusée car mauvais user et profil non admin'
+            });      
             
+        } else if (isAdmin && (req.body.id !== userId || req.body.id == userId) ){
+            console.log('profil admin');            
+            next();
+        } else  {
+            console.log('profil user');             
             next();
         }
     } catch (error) {
         res.status(401).json({
-            error: new Error('Invalid request !')
+            error: 'requete verif token impossible!'
         });
     }
 };

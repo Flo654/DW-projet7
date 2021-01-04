@@ -10,19 +10,19 @@ import 'dotenv/config';
 //////////////////////////////////////
 
 export  const signUp = async (req, res) => {
-    try {        
-        const searchOption = { where:{ [Op.or]:[ {email: req.body.email}, {userName: req.body.userName} ]}};
+    try {  
+             
+        const searchOption = { where:{ [Op.or]:[ {email: req.body.email }, {userName: req.body.userName} ]}};
         const searchUser = await models.User.findOne(searchOption);
-               
         if( !searchUser){
             const hashPassword = await bcrypt.hash(req.body.password, 10);
-            const hashMail = await bcrypt.hash(req.body.email, 1);
             const createUser = await models.User.create({
-                email: hashMail,
+                email: req.body.email,
                 userName: req.body.userName,
                 password: hashPassword,
                 isAdmin: false
             });
+            console.log(createUser.isAdmin);
             return res.status(201).json(createUser);
 
         } else if ( searchUser.email === req.body.email){
@@ -46,7 +46,7 @@ export const logIn = async (req, res) => {
     try {        
         const searchOption = { where:{ userName: req.body.userName }};
         const searchUser = await models.User.findOne(searchOption);   
-        console.log(searchUser.id);     
+       // console.log(searchUser.id);     
         if( !searchUser){
             return res.status(200).json({
                 error: 'incorrect user'            
@@ -62,7 +62,8 @@ export const logIn = async (req, res) => {
             res.status(200).json({
                 userId: searchUser.id,
                 token: jwt.sign(
-                    { userId: searchUser.id },
+                    { userId: searchUser.id,
+                      isAdmin: searchUser.isAdmin},
                     ( process.env.AUTH_TOKEN ),
                     { expiresIn: '24h' }
                 )
@@ -78,10 +79,11 @@ export const logIn = async (req, res) => {
 /////////// getting user //////////////
 //////////////////////////////////////
 export const getUser = async (req, res) => {
-    try {        
+    try {   
+        console.log(req.body);     
         const searchOption = { 
-            attributes: [ 'email', 'userName', 'isAdmin'], 
-            where:{ userName: req.body.userName }};
+            attributes: [ 'id','email', 'userName', 'isAdmin'], 
+            where:{ id: req.body.id }};
         const searchUser = await models.User.findOne(searchOption);   
         res.status(200).json({ searchUser }); 
        
@@ -95,14 +97,44 @@ export const getUser = async (req, res) => {
 /////////// deleting user //////////////
 //////////////////////////////////////
 export const deleteUser = async (req, res) => {
-    try {        
-        const searchOption = { where:{ userName: req.body.userName }};
+    try {  
+          
+        const searchOption = { where:{ id: req.body.id }};
         const searchUser = await models.User.findOne(searchOption);   
+        console.log(searchUser.userName)
         res.status(200).json({ "message": "user deleted !" }); 
-        const deleteUser = await searchUser.destroy();
-        console.log(deleteUser);
+        console.log('deleted');
+        
+
+       // const deleteUser = await searchUser.destroy();
+        
        
     } catch (error) {
       return res.status(504).json({error: error.message})
     }
 }
+
+export const getAllUser = async (req, res) => {
+    try {  
+        const token = req.headers.authorization.split(' ')[1]; // catch token 
+        const decodedToken = jwt.verify(token, process.env.AUTH_TOKEN); // verify token
+        const user = await models.User.findOne({ where: { id: decodedToken.userId } });
+        
+        const isAdmin = decodedToken.isAdmin;
+        if(isAdmin){
+            const getAllUser = await models.User.findAll({
+                where: {
+                isAdmin: false
+                }});
+            return res.status(201).json(getAllUser);
+        }
+        else {return res.status(200).json({
+            error: 'profil non admin !'
+        })}
+       
+    } catch (error) {
+      return res.status(504).json({error: error.message})
+    }
+}
+
+

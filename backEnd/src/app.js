@@ -18,24 +18,24 @@ import rateLimit from 'express-rate-limit';
 //////// utils & routes import /////////
 ////////////////////////////////////////
 import userRoutes from "../src/routes/user";
-//import sauceRoutes from "../back/src/routes/sauce";
-//import dbConnection  from "../back/src/utils/dbConnect";
+import messageRoutes from "../src/routes/message";
+
 
 const app = express();
 
-// 
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 50, // limit each IP to 50 requests per windowMs
     message: "Too many requests, please try again after 15 minutes"
 });
-app.use(limiter);
+//app.use(limiter);
 app.use(cors());
 app.use(helmet());
 app.use(bodyParser.json());
 
 
-app.use('/api/users', userRoutes)
+app.use('/api/users', userRoutes);
+app.use('/api/messages', messageRoutes)
 
 
 
