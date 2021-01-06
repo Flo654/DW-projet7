@@ -9,22 +9,16 @@ const auth = async (req, res, next)=> {
         const user = await models.User.findOne({ where: { id: decodedToken.userId } });
         const userId = decodedToken.userId; 
         const isAdmin = decodedToken.isAdmin;
-        req.user = user
+        req.user = user;
         
-        
-           
-        if ( !isAdmin && req.body.id !== userId ) {// compare tokens
+        if(isAdmin || !req.body.id || req.body.id == userId){
+            console.log('admin ou user');
+            next()            
+        }else{
             res.status(500).json({
                 error : 'authorisation refusée car mauvais user et profil non admin'
-            });      
-            
-        } else if (isAdmin && (req.body.id !== userId || req.body.id == userId) ){
-            console.log('profil admin');            
-            next();
-        } else  {
-            console.log('profil user');             
-            next();
-        }
+            }); }
+        
     } catch (error) {
         res.status(401).json({
             error: 'requete verif token impossible!'
