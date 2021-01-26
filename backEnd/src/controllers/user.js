@@ -5,6 +5,9 @@ import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import 'dotenv/config';
 
+
+
+
 //////////////////////////////////////
 /////////// signup  user //////////////
 //////////////////////////////////////
@@ -25,13 +28,13 @@ export  const signUp = async (req, res) => {
             console.log(createUser.isAdmin);
             return res.status(201).json(createUser);
 
-        } else if ( searchUser.email === req.body.email){
-            return res.status(200).json({
-                error: 'email already exist !'
+        } else if ( searchUser.email == req.body.email){
+            return res.status(400).json({
+                message: 'adresse mail déja existante!'
             })
-        } else if ( searchUser.userName === req.body.userName){
-            return res.status(200).json({
-                error: 'user already exist !'
+        } else if ( searchUser.userName == req.body.userName){
+            return res.status(400).json({
+                message: 'utilisateur déjà existant !'
             })            
         }     
     } catch (error) {
@@ -39,24 +42,29 @@ export  const signUp = async (req, res) => {
     }
 }
 
+
+
+
+
 //////////////////////////////////////
 /////////// login user //////////////
 //////////////////////////////////////
 export const logIn = async (req, res) => {
     try {        
+        console.log(req.body.userName); 
         const searchOption = { where:{ userName: req.body.userName }};
         const searchUser = await models.User.findOne(searchOption);   
-       // console.log(searchUser.id);     
+        
+           
         if( !searchUser){
-            return res.status(200).json({
-                error: 'incorrect user'            
-            });
+            
+           return res.status(400).json({ message: "utilisateur inconnu"})            
+            
         } else {
             const passVerify = await bcrypt.compare(req.body.password, searchUser.password);
             if (!passVerify){
-                return res.status(200).json({
-                    error: 'wrong password !'            
-                });
+                console.log(passVerify);
+                return res.status(400).json({ message: "mot de passe erroné"})
             }
             
             res.status(200).json({
@@ -69,63 +77,25 @@ export const logIn = async (req, res) => {
                 )
             }); 
                             
-        }         
+        }        
     } catch (error) {
       return res.status(500).json({error: error.message})
     }
 }
 
-//////////////////////////////////////
-/////////// getting user //////////////
-//////////////////////////////////////
-export const getUser = async (req, res) => {
-    try {   
-        console.log(req.body);     
-        const searchOption = { 
-            attributes: [ 'id','email', 'userName', 'isAdmin'], 
-            where:{ id: req.body.id }};
-        const searchUser = await models.User.findOne(searchOption);   
-        res.status(200).json({ searchUser }); 
-       
-    } catch (error) {
-      return res.status(504).json({error: error.message})
-    }
-}
+
+
 
 
 //////////////////////////////////////
-/////////// deleting user //////////////
+///////// getting all users //////////
 //////////////////////////////////////
-export const deleteUser = async (req, res) => {
-    try {  
-          
-        const searchOption = { where:{ id: req.body.id }};
-        const searchUser = await models.User.findOne(searchOption);   
-        console.log(searchUser.userName)
-        res.status(200).json({ "message": "user deleted !" }); 
-        console.log('deleted');
-        
-
-       // const deleteUser = await searchUser.destroy();
-        
-       
-    } catch (error) {
-      return res.status(504).json({error: error.message})
-    }
-}
-
 export const getAllUser = async (req, res) => {
     try {  
-        const token = req.headers.authorization.split(' ')[1]; // catch token 
-        const decodedToken = jwt.verify(token, process.env.AUTH_TOKEN); // verify token
-        const user = await models.User.findOne({ where: { id: decodedToken.userId } });
-        
-        const isAdmin = decodedToken.isAdmin;
-        if(isAdmin){
+         // si le compte est administrateur ==> authorisation d'obtenir la liste de tous les comptes      
+        if(req.user.isAdmin){
             const getAllUser = await models.User.findAll({
-                where: {
-                isAdmin: false
-                }});
+               });
             return res.status(201).json(getAllUser);
         }
         else {return res.status(200).json({
@@ -136,5 +106,77 @@ export const getAllUser = async (req, res) => {
       return res.status(504).json({error: error.message})
     }
 }
+
+
+
+
+
+
+//////////////////////////////////////
+/////////// getting user //////////////
+//////////////////////////////////////
+export const getUser = async (req, res) => {
+    try {   
+            
+        const searchOption = { 
+            attributes: [ 'id','email', 'userName', 'isAdmin'], 
+            where:{ id: req.user.id }};
+        const searchUser = await models.User.findOne(searchOption);   
+        res.status(200).json({ searchUser }); 
+       
+    } catch (error) {
+      return res.status(504).json({error: error.message})
+    }
+}
+
+
+//////////////////////////////////////
+/////////// deleting user ///////////
+//////////////////////////////////////
+export const deleteUser = async (req, res) => {
+    try {  
+         
+        const searchOption = { where:{ id: req.params.id }};
+        const searchUser = await models.User.findOne(searchOption);
+        
+        if((req.params.id != req.user.id) &&  !req.user.isAdmin  ){
+            throw new Error('vous ne pouvez pas supprimer le compte')
+            return
+        } 
+        models.Message.destroy({ where: { userId: req.params.id }})
+        await searchUser.destroy();       
+        res.status(200).json({ "message": "user deleted !" }); 
+             
+    } catch (error) {
+      return res.status(504).json({message: error.message})
+    }
+}
+
+
+
+
+//////////////////////////////////////
+/////////// modify user ///////////
+//////////////////////////////////////
+
+export const modifyUser = async (req, res) => {
+    try {  
+        const searchOption = { where:{ id: req.params.id }};
+        const searchUser = await models.User.findOne(searchOption);
+        if(!req.user.isAdmin){
+            throw new Error('vous ne pouvez pas supprimer le compte')
+            return
+        }   
+       console.log('modified');
+        res.status(200).json({ "message": "user modified !" }); 
+        await models.User.update(
+            { isAdmin: req.user.isAdmin },
+            { where: { id: req.params.id } }
+        );       
+    } catch (error) {
+      return res.status(504).json({error: error.message})
+    }
+}
+
 
 

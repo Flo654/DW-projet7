@@ -10,6 +10,7 @@ const auth = async (req, res, next)=> {
         const userId = decodedToken.userId; 
         const isAdmin = decodedToken.isAdmin;
         req.user = user;
+       
         
         if(isAdmin || !req.body.id || req.body.id == userId){
             console.log('admin ou user');

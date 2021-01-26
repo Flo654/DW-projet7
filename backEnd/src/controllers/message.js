@@ -54,19 +54,21 @@ export  const getOneMessage = async (req, res) => {
 
 export  const modifyMessage = async (req, res) => {
     try {  
-      let searchOptions =  {where: { id: req.params.id }};
-      let messageToModify = await models.Message.findOne(searchOptions);            
-      if (req.user && (req.user.isAdmin == true || req.user.id == messageToModify.userId)) {
-        await models.Message.update({
-          content: req.body.content                           
-        },{where: { id: req.params.id }
+     console.log(req.body.content);
+      let messageToModify = await models.Message.findByPk(req.params.id); 
+                    
+      if (req.user.isAdmin || (req.user.id == messageToModify.userId)) {
+        await models.Message.update(
+          {content: req.body.content                           
+          },
+          {where: { id: messageToModify.id }
         });
         res.status(200).send({
           message: "Publication modifiée"});   
 
-        } else{ res.status(403).json('Utilisateur non autorisé à editer ce post');
+        } else{ res.status(403).json('Utilisateur non autorisé à editer ce post');}
 
-      };      
+         
     } catch (error) {
       return res.status(500).json({error: error.message})
     };
@@ -75,9 +77,11 @@ export  const modifyMessage = async (req, res) => {
 
 export  const deleteMessage = async (req, res) => {
     try {     
-      const searchOptions =  {where: { id: req.params.id }};
-      const messageToDelete = await models.Message.findOne(searchOptions);      
+     
+      const messageToDelete = await models.Message.findByPk(req.params.id);
+            
       if(req.user.isAdmin || (req.user.id == messageToDelete.userId)){
+        console.log('message effacé');
         await  models.Message.destroy({ where: { id: messageToDelete.id }});
         res.status(201).json({
           message : 'Message effacé avec succés'
@@ -87,7 +91,7 @@ export  const deleteMessage = async (req, res) => {
         res.status(500).json({ 
           error : 'authorisation de supprimer le message refusée '
         }); 
-      };       
+      };     
     } catch (error) {
       return res.status(500).json({error: error.message});
     };
