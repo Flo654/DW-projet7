@@ -1,43 +1,146 @@
 <template>
-    <div class="create-message-card">
-        <div class="create-message-card-header">
-            <div class="create-message-card-header__content">
-                <router-link :to="{name: 'MainVue'}" >
-                    <div class="header-content-logo mdi mdi-arrow-left"></div>
-                </router-link>
-                
-                <p class="header-content-message">Creer une publication</p>
-            </div>
-            <button class="create-message-card-header__button ">Publier</button>
-        </div>
-        <div class="create-message-card__user-infos">
-            <div class="message-card-header__user-logo mdi mdi-account-circle"></div>
-            <div class="message-card-header__user-name">Flo654</div>
-        </div>
-        <div class="create-message-card-content">
-            <textarea cols="32" rows="10" placeholder="Ecrivez votre message ici ...." ></textarea>
-        </div>
+
+    <div class="message-wrapper">      
+        <div class="mdi mdi-account-circle" ></div>  
+            
+            <input type="text" aria-label="message" @click="showModal = true" class="message-wrapper-input"   placeholder="Ecrivez un message...">
+               
+  </div>
+  <div > 
+   <vue-final-modal  v-model="showModal" name="example">
+        <div class="backdrop" >
+                <div class="modal" >
+                    <form @submit.prevent="postMessage" class="create-message-card">
+                        <div class="create-message-card-header">
+                            <div class="create-message-card-header__content">
+                                <router-link :to="{name: 'MainVue'}" role="presentation" aria-label="aaaa">
+                                    <div @click="showModal = false" class="header-content-logo mdi mdi-arrow-left" role="presentation"></div>
+                                </router-link>
+                        
+                                <h1 class="header-content-message">Creer une publication</h1>
+                            </div>
+                            <button  class="create-message-card-header__button ">Publier</button>
+                        </div>
+                        <div class="create-message-card__user-infos">
+                            <div class="message-card-header__user-logo mdi mdi-account-circle"></div>
+                            <div class="message-card-header__user-name">{{userInfos.userName}}</div>
+                        </div>
+                        <div class="create-message-card-content">
+                            <textarea cols="32" aria-label="message" rows="10" v-model="message" placeholder="Ecrivez votre message ici ...." ></textarea>
+                        </div>
 
 
-    </div>
+                    </form>
+                    
+                </div>
+            </div>  
+    </vue-final-modal>
+  </div>
   
 </template>
 
 <script>
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+
 export default {
+    props:['userInfos'],
+
+    setup(props) {
+        const showModal = ref(false)
+        const message = ref('')
+        const router = useRouter()
+
+        const postMessage = async()=>{
+            
+            if(!message.value){
+                console.log('message vide', props.userInfos.id)
+            return}
+            try {
+                const url ='http://localhost:3030/api/messages/post'
+                const messageToSend = {
+                    content: message.value,
+                    attachment: null,
+                    likes: 0
+
+                }
+                const response = await fetch(url,{
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': "Bearer " +  sessionStorage.getItem("token") 
+                    },
+                    body: JSON.stringify(messageToSend)
+            })
+            history.go(0)
+
+
+                
+            } catch (error) {
+                console.log('erreur');
+                
+            }
+            
+            
+
+        }
+
+      
+        
+
+      
+      
+      return{showModal, message, postMessage}
+    }
 
 }
 </script>
 
-<style scoped>
-.create-message-card{
+<style>
+    .message-wrapper{
+        background: rgb(245, 243, 243);       
+        display: flex;
+        margin: 0 auto;
+        margin-bottom: 1rem;
+        padding : 0.5rem 0;  
+        padding-left: 1rem;
+             
+        
+        width: 90%;
+        align-items: center;
+        box-sizing: border-box;
+        border-radius: 5px;
+        
+    }
+
+    .mdi{
+        font-size: 25px;
+        color: rgb(165, 158, 158);
+        
+    }
+    .mdi-account-circle{
+        font-size: 35px;
+        color: rgb(165, 158, 158);
+    }
+
+    .message-wrapper-input{
+        border-radius: 30px;
+        border: solid 0.8px #19177c;
+        cursor: pointer;
+        padding: 0.5rem;
+        padding-right: 2.4rem;
+
+        
+    }
+    .create-message-card{
     padding:0 0.5rem;
     background: white;
     margin-bottom: 1rem;
 }
 .create-message-card-header{
     display: flex;
-    
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
     align-items: center;
     justify-content: space-between
 }
@@ -48,6 +151,7 @@ export default {
 
 .header-content-message{
     padding-left: 0.5rem;
+    font-size: 1.2rem;
 }
 
 button{
@@ -93,6 +197,5 @@ button:focus{
     cursor: pointer;
     outline: none;
 }
-
 
 </style>
