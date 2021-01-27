@@ -170,7 +170,7 @@ export const modifyUser = async (req, res) => {
        console.log('modified');
         res.status(200).json({ "message": "user modified !" }); 
         await models.User.update(
-            { isAdmin: req.user.isAdmin },
+            { isAdmin: req.body.isAdmin },
             { where: { id: req.params.id } }
         );       
     } catch (error) {
