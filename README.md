@@ -17,7 +17,7 @@
 * Cloner le dépôt github sur votre :computer:
 * Depuis le dossier :file_folder: `backend`. lancer `npm i` , puis `npm start` 
 * Dans le dossier Backend, completez le fichier `.env.txt` fourni  avec vos identifiants de connection à SQL et supprimez l'extention .txt
-* Utilisez le dump de la base de donnée fourni pour acceder à la base de données.
+* Utilisez le dump de la base de donnée fourni pour acceder à la base de données ou creez votre base de données.
 * vous pouvez vous connecter en tant qu'administrateur avec le pseudo: "admin" et le mot de passe: "admin"
 
 rendez vous ici https://github.com/Flo654/frontend-groupomania pour la mise en oeuvre du Front
